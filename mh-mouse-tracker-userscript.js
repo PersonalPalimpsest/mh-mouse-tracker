@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MouseHunt Mouse Tracker
 // @namespace    http://tampermonkey.net/
-// @version      0.7.0
+// @version      0.6.8
 // @description  Tracks mice caught in MouseHunt
 // @author       You
 // @match        https://www.mousehuntgame.com/*
@@ -21,7 +21,7 @@ GM_addStyle(`
         top: 20px;
         left: 20px;
         z-index: 1000;
-        display: flex; /* Default display: flex when open */
+        display: flex;
         flex-direction: column;
         overflow: hidden; /* Prevent scrollbars during resize */
 
@@ -47,25 +47,6 @@ GM_addStyle(`
         color: #f1f1f1;
         user-select: none; /* Prevent text selection while dragging */
         flex-shrink: 0;   /* Prevent title from shrinking */
-        display: flex;      /* Use flexbox for title to align close button */
-        justify-content: space-between; /* Push title text to left, button to right */
-        align-items: center;    /* Vertically align title and button */
-    }
-
-    /* --- Close Button Styling in Title Bar --- */
-    #mh-tracker-close-button {
-        background: none;
-        color: #e0e0e0;
-        border: none;
-        font-size: 1em;
-        cursor: pointer;
-        opacity: 0.6;
-        transition: opacity 0.3s ease;
-        margin-left: 10px; /* Add some space between title and close button */
-    }
-
-    #mh-tracker-close-button:hover {
-        opacity: 1;
     }
 
     /* --- Controls Row (Hunts & Button) --- */
@@ -153,7 +134,7 @@ GM_addStyle(`
     #mh-mouse-tracker-container #mh-mouse-list #mh-mouse-list-header-row {
         background-color: #444;
         font-weight: bold;
-        padding: 1px 6px;        /* Vertical and horizontal padding */
+        padding: 1px 6px 1px 0px;        /* Vertical and horizontal padding */
         flex-shrink: 0;
     }
 
@@ -172,8 +153,8 @@ GM_addStyle(`
         background-color: #555555; /* Hover color */
     }
     /* Green highlight for newly caught mice - whole row */
-    #mh-mouse-tracker-container #mh-mouse-list div[style*="color: lightgreen"] {
-        color: lightgreen; /* Green text color */
+    #mh-mouse-tracker-container #mh-mouse-list div[style*="color: green"] {
+        color: green; /* Green text color */
         /* Add other row-level styling here if needed, like background-color */
     }
 
@@ -237,26 +218,6 @@ GM_addStyle(`
     #mh-mouse-tracker-container #mh-mouse-list:active::-webkit-scrollbar:vertical {
         opacity: 1;         /* Show on hover or scroll active */
     }
-
-    /* --- Reopen Button Styling --- */
-    #mh-tracker-reopen-button {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        background-color: #444;
-        color: #e0e0e0;
-        border: 1px solid #666;
-        border-radius: 5px;
-        padding: 5px 10px;
-        font-size: 0.9em;
-        cursor: pointer;
-        z-index: 999; /* Ensure it's below tracker but above game content */
-        display: none; /* Initially hidden - will be shown when tracker is closed */
-    }
-
-    #mh-tracker-reopen-button:hover {
-        background-color: #555;
-    }
 `);
 
 // == JavaScript functions ==
@@ -267,7 +228,6 @@ GM_addStyle(`
     let mouseData = [];
     let trackerState = {};
     let domElements = {};
-    let reopenButton; // Declare reopen button outside createUI for wider scope
 
     function correctMouseName(mouseName) {
         mouseName = mouseName.replace(" Mouse", "");
@@ -286,7 +246,7 @@ GM_addStyle(`
             newMouseName = "Vincent The Magnificent";
         } else if (mouseName === "Corky, the Collector") {
             newMouseName = "Corky the Collector";
-            } else if (mouseName === "Ol' King Coal") {
+        } else if (mouseName === "Ol' King Coal") {
             newMouseName = "Ol King Coal";
         }
         return newMouseName;
@@ -353,22 +313,13 @@ GM_addStyle(`
 
 
     function createUI() {
-        console.log("createUI() function is starting..."); // *** ADDED LINE ***
-        console.log("GM_getValue at start of createUI:", typeof GM_getValue); // *** ADDED LINE ***
-
         const trackerContainer = document.createElement('div');
         trackerContainer.id = 'mh-mouse-tracker-container';
 
-        console.log("GM_getValue before 'mhTrackerLeft':", typeof GM_getValue); // *** ADDED LINE ***
         let savedLeft = GM_getValue('mhTrackerLeft', '20px');
-        console.log("GM_getValue before 'mhTrackerTop':", typeof GM_getValue); // *** ADDED LINE ***
         let savedTop = GM_getValue('mhTrackerTop', '20px');
-        console.log("GM_getValue before 'mhTrackerWidth':", typeof GM_getValue); // *** ADDED LINE ***
         let savedWidth = GM_getValue('mhTrackerWidth');
-        console.log("GM_getValue('mhTrackerHeight') value:", GM_getValue('mhTrackerHeight')); // *** MODIFIED LOG LINE ***
         let savedHeight = GM_getValue('mhTrackerHeight');
-        console.log("GM_getValue before 'mhTrackerOpen':", typeof GM_getValue); // *** ADDED LINE ***
-        const savedTrackerOpen = GM_getValue('mhTrackerOpen', true); // Default to open on first install
 
         trackerContainer.style.left = savedLeft;
         trackerContainer.style.top = savedTop;
@@ -381,9 +332,6 @@ GM_addStyle(`
             trackerContainer.style.height = savedHeight;
         }
 
-        // Set initial visibility based on saved state
-        trackerContainer.style.display = savedTrackerOpen ? 'flex' : 'none';
-
 
         let dragOffset = { x: 0, y: 0 };
         let isDragging = false;
@@ -393,21 +341,7 @@ GM_addStyle(`
         title.textContent = 'Mouse Tracker v' + scriptVersion;
         trackerContainer.appendChild(title);
 
-        // === Close Button ===
-        const closeButton = document.createElement('button');
-        closeButton.id = 'mh-tracker-close-button';
-        closeButton.textContent = '×'; // Or use an icon if preferred
-        closeButton.onclick = function() {
-            trackerContainer.style.display = 'none'; // Hide tracker
-            reopenButton.style.display = 'block';   // Show reopen button
-            GM_setValue('mhTrackerOpen', false);     // Save closed state
-        };
-        title.appendChild(closeButton); // Append close button to title
-
         title.addEventListener('mousedown', (e) => {
-            if (e.target === closeButton) { // Prevent dragging when clicking close button
-                return;
-            }
             isDragging = true;
             dragOffset.x = e.clientX - trackerContainer.offsetLeft;
             dragOffset.y = e.clientY - trackerContainer.offsetTop;
@@ -476,7 +410,7 @@ GM_addStyle(`
         headerNameCol.textContent = 'Mouse';
 
         const headerCMCol = document.createElement('span');
-        headerCMCol.className = 'mh-cm-col';
+        headerCMCol.className = 'mh-header-cm-col';
         headerCMCol.textContent = 'C/M';
 
         headerRow.appendChild(headerNameCol);
@@ -501,35 +435,34 @@ GM_addStyle(`
         domElements.miceList = miceList;
         domElements.title = title;
         domElements.controlsRow = controlsRow;
-        domElements.trackerContainer = trackerContainer;
 
+        title.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragOffset.x = e.clientX - trackerContainer.offsetLeft;
+            dragOffset.y = e.clientY - trackerContainer.offsetTop;
+            title.style.cursor = 'grabbing';
+            title.style.userSelect = 'none';
+        });
 
-        // --- Reopen Button (Top-Left) ---
-        reopenButton = document.createElement('button'); // Assign to the outer variable
-        reopenButton.id = 'mh-tracker-reopen-button';
-        reopenButton.textContent = 'Open Mouse Tracker';
-        reopenButton.onclick = function() {
-            trackerContainer.style.display = 'flex'; // Show tracker
-            reopenButton.style.display = 'none';     // Hide reopen button
-            GM_setValue('mhTrackerOpen', true);      // Save open state
-        };
-        document.body.appendChild(reopenButton);
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            trackerContainer.style.left = (e.clientX - dragOffset.x) + 'px';
+            trackerContainer.style.top  = (e.clientY - dragOffset.y) + 'px';
+        });
 
-        // Set initial reopen button visibility based on saved state
-        reopenButton.style.display = savedTrackerOpen ? 'none' : 'block';
-
-        // Ensure initial tracker visibility is also set based on saved state (already set above, but for clarity)
-        trackerContainer.style.display = savedTrackerOpen ? 'flex' : 'none';
-
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            title.style.cursor = 'grab';
+            title.style.userSelect = '';
+            GM_setValue('mhTrackerLeft', trackerContainer.style.left);
+            GM_setValue('mhTrackerTop', trackerContainer.style.top);
+        });
 
         let isResizing = false;
         let resizeStartX, resizeStartY;
         let initialWidthResize, initialHeightResize;
 
         trackerContainer.addEventListener('mousedown', (e) => {
-            if (e.target === closeButton) { // Prevent resizing when clicking close button
-                return;
-            }
             const containerRect = trackerContainer.getBoundingClientRect();
             const resizeHandleSize = 10;
 
@@ -565,6 +498,9 @@ GM_addStyle(`
                 GM_setValue('mhTrackerHeight', trackerContainer.style.height);
             }
         });
+
+        document.body.appendChild(trackerContainer);
+        domElements.trackerContainer = trackerContainer;
     }
 
 
@@ -597,7 +533,7 @@ GM_addStyle(`
         headerNameCol.textContent = 'Mouse';
 
         const headerCMCol = document.createElement('span');
-        headerCMCol.className = 'mh-cm-col';
+        headerCMCol.className = 'mh-header-cm-col';
         headerCMCol.textContent = 'C/M';
 
         headerRow.appendChild(headerNameCol);
@@ -705,11 +641,6 @@ GM_addStyle(`
 
         const initialContentHeight = calculateInitialContentHeight(domElements.trackerContainer, domElements.title, domElements.controlsRow, domElements.miceList);
         domElements.trackerContainer.style.height = `${initialContentHeight}px`;
-
-        // Ensure tracker is visible after reset and reopen button is hidden
-        domElements.trackerContainer.style.display = 'flex';
-        reopenButton.style.display = 'none';
-        GM_setValue('mhTrackerOpen', true); // Save "open" state after reset
     }
 
     function initializeTracker() {
