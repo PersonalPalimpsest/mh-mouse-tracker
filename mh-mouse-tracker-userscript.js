@@ -15,48 +15,58 @@
 
 // == CSS for Dark Mode ==
 GM_addStyle(`
-    #mh-mouse-tracker-container_v2 {position: absolute; top: 20px; left: 20px; z-index: 1000; display: flex; flex-direction: column; overflow: hidden; background-color: #2a2a2a; color: #e0e0e0; border: 1px solid #444444; border-radius: 5px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.6); cursor: default; padding: 10px 10px 10px 10px; max-height: 95vh; min-height: 75px; font-size: math;}
-    #mh-mouse-tracker-container_v2 h3 {cursor: grab; margin: 0 0 10px 0; font-size: 1.2em; font-weight: bold; color: #f1f1f1; user-select: none; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;}
-    #mh-tracker-close-button_v2 {background: none; color: #e0e0e0; border: none; font-size: 1em; cursor: pointer; opacity: 0.6; transition: opacity 0.3s ease; margin-left: 10px; position: relative; top: -3px;}
-    #mh-tracker-close-button_v2:hover {opacity: 1;}
-    #mh-controls-row_v2 {display: flex; align-items: stret
-	ch; margin-bottom: 5px; margin-right: 9px; flex-shrink: 0;}
-    #mh-hunt-counts-row_v2 {background-color: #3b3b3b; border-radius: 5px 0 0 5px; padding: 3px 5px; text-align: center; box-sizing: border-box; flex-grow: 0; flex-shrink: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
-    #mh-start-button-container_v2 {flex-grow: 1; flex-shrink: 0;}
-    button#mh-tracker-start-button_v2 {background-color: #5a5a5a; color: #e0e0e0; border: none; border-radius: 0 5px 5px 0; padding: 3px 5px; font-size: 0.95em; cursor: pointer; text-align: center; box-sizing: border-box; user-select: none; width: 100%; transition: background-color 0.3s ease;}
-    button#mh-tracker-start-button_v2:hover {background-color: #666666;}
-    button#mh-tracker-start-button_v2:disabled {background-color: #2a2a2a; cursor: not-allowed;}
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2 {display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; margin-top: 5px; min-height: 50px; flex-grow: 1; max-height: 95vh; scrollbar-width: thin; scrollbar-color: #555555 #2a2a2a; height: auto;} /* Added height: auto; */
-    #mh-mouse-tracker-container_v2 #mh-mouse-list-header-row_v2, #mh-mouse-tracker-container_v2 #mh-mouse-list_v2 div {display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2 #mh-mouse-list-header-row_v2 {background-color: #444; font-weight: bold; padding: 0px 6px; margin: 0;} /* Padding and margin removed */
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2 div {background-color: #3d3d3d; margin-bottom: 0px; transition: background-color 0.3s ease;} /* Reduced padding */
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2 div:nth-child(odd) {background-color: #333333;}
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2 div:hover {background-color: #555555;}
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2 div[style*="color: lightgreen"] {color: lightgreen;}
-    .mh-mouse-name-col_v2, .mh-header-name-col_v2 {text-align: left; padding: 0px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
-    .mh-cm-col_v2, .mh-header-cm-col_v2 {text-align: center; padding: 4px 0; padding-right: 2px; box-sizing: border-box; min-width: 0; white-space: nowrap;}
-    #mh-mouse-tracker-container_v2.resizing {cursor: nwse-resize;}
-    #mh-mouse-tracker-container_v2::after {content: ''; position: absolute; right: 0; bottom: 0; width: 10px; height: 10px; background-color: rgba(255, 255, 255, 0.1); border-right: 2px solid #666; border-bottom: 2px solid #666; cursor: nwse-resize; box-sizing: border-box;}
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2::-webkit-scrollbar {width: 8px;}
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2::-webkit-scrollbar-thumb {background-color: #555555; border-radius: 10px; transition: background-color 0.3s ease;}
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2::-webkit-scrollbar-thumb:hover {background-color: #888888;}
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2::-webkit-scrollbar-track {background-color: #2a2a2a; border-radius: 10px;}
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2::-webkit-scrollbar:vertical {opacity: 0; transition: opacity 0.3s ease-in-out;}
-    #mh-mouse-tracker-container_v2 #mh-mouse-list_v2:hover::-webkit-scrollbar:vertical, #mh-mouse-tracker-container_v2 #mh-mouse-list_v2:active::-webkit-scrollbar:vertical {opacity: 1;}
-    #mh-tracker-reopen-button_v2 {position: absolute; top: 10px; left: 10px; background-color: #444; color: #e0e0e0; border: 1px solid #666; border-radius: 5px; padding: 5px 10px; font-size: 0.9em; cursor: pointer; z-index: 999; display: none;}
-    #mh-tracker-reopen-button_v2:hover {background-color: #555;}
-    .mh-group-header-row_v2 {background-color: #555; color: #f0f0f0; font-weight: bold; padding: 5px 6px; margin-bottom: 0px; border-radius: 3px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;} /* Reduced padding and margin */
-    .mh-group-header-row_v2:hover {background-color: #666;}
-    .mh-group-title_v2 {flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
-    .mh-group-collapse-icon_v2 {width: 14px; height: 14px; text-align: center; line-height: 14px; margin-left: 10px; font-size: 1em; opacity: 0.7; transition: opacity 0.3s ease;}
-    .mh-group-header-row_v2:hover .mh-group-collapse-icon_v2 {opacity: 1;}
-    .mh-group-mice-container_v2 {padding: 0px; margin-left: 0px; overflow: hidden; /*height: auto;*/ } /* Removed fixed height from group containers, removed margin */
-    .mh-location-header-row_v2 {background-color: #4a4a4a; color: #e8e8e8; font-weight: bold; padding: 3px 6px; margin-top: 0px; margin-bottom: 0px; border-radius: 3px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;} /* Reduced padding and margin */
-    .mh-location-header-row_v2:hover {background-color: #5a5a5a;}
-    .mh-location-title_v2 {flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95em;}
-    .mh-location-collapse-icon_v2 {width: 12px; height: 12px; text-align: center; line-height: 12px; margin-left: 8px; font-size: 0.9em; opacity: 0.6; transition: opacity 0.3s ease;}
-    .mh-location-header-row_v2:hover .mh-location-collapse-icon_v2 {opacity: 1;}
-    .mh-location-mice-container_v2 {padding: 0px; margin-left: 0px; overflow: hidden; /*height: auto;*/ } /* Removed fixed height from location containers, removed margin */
+  #mh-mouse-tracker-container_v2 {position: absolute; top: 20px; left: 20px; z-index: 1000; display: flex; flex-direction: column; overflow: hidden; background-color: #2a2a2a; color: #e0e0e0; border: 1px solid #444444; border-radius: 5px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.6); cursor: default; padding: 10px 10px 10px 10px; max-height: 95vh; min-height: 75px; font-size: math;}
+  #mh-mouse-tracker-container_v2 h3 {cursor: grab; margin: 0 0 10px 0; font-size: 1.2em; font-weight: bold; color: #f1f1f1; user-select: none; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;}
+  /**/
+  #mh-tracker-close-button_v2 {background: none; color: #e0e0e0; border: none; font-size: 1em; cursor: pointer; opacity: 0.6; transition: opacity 0.3s ease; margin-left: 10px; position: relative; top: -3px;}
+  #mh-tracker-close-button_v2:hover {opacity: 1;}
+  /**/
+  #mh-controls-row_v2 {display: flex; align-items: stretch; margin-bottom: 5px; margin-right: 9px; flex-shrink: 0;}
+  #mh-hunt-counts-row_v2 {background-color: #3b3b3b; border-radius: 5px 0 0 5px; padding: 3px 5px; text-align: center; box-sizing: border-box; flex-grow: 0; flex-shrink: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+  /**/
+  #mh-start-button-container_v2 {flex-grow: 1; flex-shrink: 0;}
+  /**/
+  button#mh-tracker-start-button_v2 {background-color: #5a5a5a; color: #e0e0e0; border: none; border-radius: 0 5px 5px 0; padding: 3px 5px; font-size: 0.95em; cursor: pointer; text-align: center; box-sizing: border-box; user-select: none; width: 100%; transition: background-color 0.3s ease;}
+  button#mh-tracker-start-button_v2:hover {background-color: #666666;}
+  button#mh-tracker-start-button_v2:disabled {background-color: #2a2a2a; cursor: not-allowed;}
+  /**/
+  #mh-mouse-list_v2 {display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; margin-top: 5px; min-height: 50px; flex-grow: 1; max-height: 95vh; scrollbar-width: thin; scrollbar-color: #555555 #2a2a2a; height: 100%;} /* Added height: auto; */
+  #mh-mouse-list-header-row_v2 {display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+  #mh-mouse-list_v2 div {display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; white-space: nowrap; overflow-y: hidden; text-overflow: ellipsis;}
+  #mh-mouse-list_v2 #mh-mouse-list-header-row_v2 {background-color: #444; font-weight: bold; padding: 0px 6px; margin: 0;} /* Padding and margin removed */
+  #mh-mouse-list_v2 div {background-color: #3d3d3d; margin-bottom: 0px; transition: background-color 0.3s ease;} /* Reduced padding */
+  #mh-mouse-list_v2 div:nth-child(odd) {background-color: #333333;}
+  #mh-mouse-list_v2 div:hover {background-color: #555555;}
+  #mh-mouse-list_v2 div[style*="color: lightgreen"] {color: lightgreen;}
+  /**/
+  .mh-mouse-name-col_v2 {text-align: left; padding: 0px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 25px;}
+  .mh-header-name-col_v2 {text-align: left; padding: 0px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 25px;}
+  .mh-cm-col_v2, .mh-header-cm-col_v2 {text-align: center; padding: 4px 0; padding-right: 2px; box-sizing: border-box; min-width: 0; white-space: nowrap;}
+  /**/
+  #mh-mouse-tracker-container_v2.resizing {cursor: nwse-resize;}
+  #mh-mouse-tracker-container_v2::after {content: ''; position: absolute; right: 0; bottom: 0; width: 10px; height: 10px; background-color: rgba(255, 255, 255, 0.1); border-right: 2px solid #666; border-bottom: 2px solid #666; cursor: nwse-resize; box-sizing: border-box;}
+  #mh-mouse-tracker-container_v2 #mh-mouse-list_v2::-webkit-scrollbar {width: 8px;}
+  #mh-mouse-tracker-container_v2 #mh-mouse-list_v2::-webkit-scrollbar-thumb {background-color: #555555; border-radius: 10px; transition: background-color 0.3s ease;}
+  #mh-mouse-tracker-container_v2 #mh-mouse-list_v2::-webkit-scrollbar-thumb:hover {background-color: #888888;}
+  #mh-mouse-tracker-container_v2 #mh-mouse-list_v2::-webkit-scrollbar-track {background-color: #705252; border-radius: 10px;}
+  #mh-mouse-tracker-container_v2 #mh-mouse-list_v2::-webkit-scrollbar:vertical {opacity: 0; transition: opacity 0.3s ease-in-out;}
+  #mh-mouse-tracker-container_v2 #mh-mouse-list_v2:hover::-webkit-scrollbar:vertical, #mh-mouse-tracker-container_v2 #mh-mouse-list_v2:active::-webkit-scrollbar:vertical {opacity: 1;}
+  /**/
+  #mh-tracker-reopen-button_v2 {position: absolute; top: 10px; left: 10px; background-color: #444; color: #e0e0e0; border: 1px solid #666; border-radius: 5px; padding: 5px 10px; font-size: 0.9em; cursor: pointer; z-index: 999; display: none;}
+  #mh-tracker-reopen-button_v2:hover {background-color: #555;}
+  .mh-group-header-row_v2 {background-color: #fcfcfc; color: #f0f0f0; font-weight: bold; padding: 5px 6px; min-height: 25px; margin-bottom: 0px; border-radius: 3px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;} /* Reduced padding and margin */
+  .mh-group-header-row_v2:hover {background-color: #666;}
+  .mh-group-title_v2 {flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+  .mh-group-collapse-icon_v2 {width: 14px; height: 14px; text-align: center; line-height: 14px; margin-left: 10px; font-size: 1em; opacity: 0.7; transition: opacity 0.3s ease;}
+  .mh-group-header-row_v2:hover .mh-group-collapse-icon_v2 {opacity: 1;}
+  .mh-group-mice-container_v2 {padding: 0px; margin-left: 0px; overflow-y:scroll;/*height: auto;*/ } /* Removed fixed height from group containers, removed margin */
+  .mh-location-header-row_v2 {background-color: #4a4a4a; color: #e8e8e8; font-weight: bold; padding: 3px 6px; margin-top: 0px; margin-bottom: 0px; border-radius: 3px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;} /* Reduced padding and margin */
+  .mh-location-header-row_v2:hover {background-color: #5a5a5a;}
+  .mh-location-title_v2 {flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95em;}
+  .mh-location-collapse-icon_v2 {width: 12px; height: 12px; text-align: center; line-height: 12px; margin-left: 8px; font-size: 0.9em; opacity: 0.6; transition: opacity 0.3s ease;}
+  .mh-location-header-row_v2:hover .mh-location-collapse-icon_v2 {opacity: 1;}
+  .mh-location-mice-container_v2 {padding: 0px; margin-left: 0px; overflow-y: scroll; min-height: 100px; }
+  #mh-mouse-list_v2 div{overflow-y: auto;}
 `);
 
 // == JavaScript functions ==
