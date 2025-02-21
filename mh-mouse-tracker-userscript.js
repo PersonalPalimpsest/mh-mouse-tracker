@@ -84,7 +84,8 @@ GM_addStyle(`
     "Corky, the Collector": "Corky the Collector",
     "Ol' King Coal": "Ol King Coal"
   };
-
+  let navigationStack = [];
+  let currentView = 'root';
   let md = [];
   let ts = {};
   const dom = {};
@@ -203,19 +204,40 @@ GM_addStyle(`
     return ctrlRow;
   }
 
-  function createMouseList() {
+  const createMouseList = () => {
     const miceLst = document.createElement('div');
     miceLst.id = 'mh-mouse-list_v2';
-    miceLst.innerHTML = `
-      <div id="mh-mouse-list-header-row_v2">
-        <span class="mh-header-name-col_v2">Mouse</span>
-        <span class="mh-header-cm-col_v2">C/M</span>
-      </div>
-      Tracker Reset. Click "Start Tracker" to begin.
+    
+    // Add back button container
+    const backButtonContainer = document.createElement('div');
+    backButtonContainer.id = 'mh-back-button-container';
+    backButtonContainer.style.display = 'none';
+    const backButton = document.createElement('button');
+    backButton.textContent = '← Back';
+    backButton.onclick = handleBackNavigation;
+    backButtonContainer.appendChild(backButton);
+    
+    const headerRow = document.createElement('div');
+    headerRow.id = 'mh-mouse-list-header-row_v2';
+    headerRow.innerHTML = `
+      <span class="mh-header-name-col_v2">Mouse</span>
+      <span class="mh-header-cm-col_v2">C/M</span>
     `;
+    
+    miceLst.appendChild(backButtonContainer);
+    miceLst.appendChild(headerRow);
+    miceLst.appendChild(document.createTextNode('Tracker Reset. Click "Start Tracker" to begin.'));
+    
     return miceLst;
-  }
+  };
 
+  const handleBackNavigation = () => {
+    if (navigationStack.length > 0) {
+      navigationStack.pop(); // Remove current view
+      currentView = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : 'root';
+      updateMouseListUI(); // Refresh the UI
+    }
+  };
   function createReopenButton(trackerCont) {
     const reopenBtn = document.createElement('button');
     reopenBtn.id = 'mh-tracker-reopen-button_v2';
@@ -403,24 +425,65 @@ GM_addStyle(`
   const updateMouseListUI = () => {
     const miceLst = dom.miceLst;
     miceLst.innerHTML = '';
-
+  
+    // Recreate back button and header
+    const backButtonContainer = document.createElement('div');
+    backButtonContainer.id = 'mh-back-button-container';
+    const backButton = document.createElement('button');
+    backButton.textContent = '← Back';
+    backButton.onclick = handleBackNavigation;
+    backButtonContainer.appendChild(backButton);
+    backButtonContainer.style.display = navigationStack.length > 0 ? 'block' : 'none';
+    
+    const headerRow = document.createElement('div');
+    headerRow.id = 'mh-mouse-list-header-row_v2';
+    headerRow.innerHTML = `
+      <span class="mh-header-name-col_v2">Mouse</span>
+      <span class="mh-header-cm-col_v2">C/M</span>
+    `;
+    
+    miceLst.appendChild(backButtonContainer);
+    miceLst.appendChild(headerRow);
+  
     if (!md || md.length === 0) {
-      miceLst.textContent = "Loading mouse data...";
+      miceLst.appendChild(document.createTextNode("Loading mouse data..."));
       return;
     }
-
+  
     const currentEnvId = user.environment_type;
-    const groupedMouseData = groupMouseData(md, currentEnvId); // Group by region, then location
+    const groupedMouseData = groupMouseData(md, currentEnvId);
     const trackedHunts = calculateTotalHunts() - ts.lifetimeHuntsAtStart;
     dom.huntsCountDisplay.textContent = `Hunts: ${trackedHunts.toLocaleString()}`;
-
-    groupedMouseData.forEach(regionGroup => {
-      const regionHeaderRow = createGroupHeaderRow(regionGroup); // Reuse group header for regions
-      const regionMiceContainer = createRegionMiceContainer(regionGroup); // New region container
-
-      miceLst.appendChild(regionHeaderRow);
-      miceLst.appendChild(regionMiceContainer);
-    });
+  
+    if (currentView === 'root') {
+      // Show only region headers
+      groupedMouseData.forEach(regionGroup => {
+        const regionHeaderRow = createGroupHeaderRow(regionGroup);
+        miceLst.appendChild(regionHeaderRow);
+      });
+    } else {
+      // Find current region or location
+      const currentRegion = groupedMouseData.find(region => region.groupName === currentView);
+      if (currentRegion) {
+        // Show locations in this region
+        currentRegion.locations.forEach(locationGroup => {
+          const locationHeaderRow = createLocationHeaderRow(locationGroup);
+          miceLst.appendChild(locationHeaderRow);
+        });
+      } else {
+        // Must be a location view - find location and show its mice
+        for (const region of groupedMouseData) {
+          const location = region.locations.find(loc => loc.groupName === currentView);
+          if (location) {
+            const miceContainer = createLocationMiceContainer(location);
+            // Show all mice content directly without collapse
+            miceContainer.style.display = 'block';
+            miceLst.appendChild(miceContainer);
+            break;
+          }
+        }
+      }
+    }
   };
 
   const createRegionMiceContainer = (regionGroup) => { // New function for region container
@@ -489,17 +552,6 @@ GM_addStyle(`
       miceCont.appendChild(createMouseRow(mouse, ts.initialMouseData));
     });
     return miceCont;
-  };
-
-
-  const createMouseListHeader = () => {
-    const headerRow = document.createElement('div');
-    headerRow.id = 'mh-mouse-list-header-row_v2';
-    headerRow.innerHTML = `
-      <span class="mh-header-name-col_v2">Mouse</span>
-      <span class="mh-header-cm-col_v2">C/M</span>
-    `;
-    return headerRow;
   };
 
   const createMouseRow = (mouse, initialMouseData) => {
@@ -636,27 +688,20 @@ GM_addStyle(`
 	  updateLocationUI(locationGroup);
   };
 
-  const updateRegionUI = (regionGroup) => { // For region UI update
-    const regionHeader = findRegionHeaderElement(regionGroup.groupName);
-    const regionMiceCont = findRegionMiceContainerElement(regionGroup.groupName);
-
-    if (regionHeader && regionMiceCont) {
-      const collapseIcon = regionHeader.querySelector('.mh-group-collapse-icon_v2');
-      collapseIcon.textContent = regionGroup.isCollapsed ? '+' : '-';
-      regionMiceCont.style.display = regionGroup.isCollapsed ? 'none' : 'block';
-    }
+  const updateRegionUI = (regionGroup) => {
+    // Instead of toggling collapse, navigate to region
+    currentView = regionGroup.groupName;
+    navigationStack.push(currentView);
+    updateMouseListUI();
   };
 
-  const updateLocationUI = (locationGroup) => { // New for location UI update
-    const locationHeader = findLocationHeaderElement(locationGroup.groupName);
-    const locationMiceCont = findLocationMiceContainerElement(locationGroup.groupName);
 
-    if (locationHeader && locationMiceCont) {
-      const collapseIcon = locationHeader.querySelector('.mh-location-collapse-icon_v2');
-      collapseIcon.textContent = locationGroup.isCollapsed ? '+' : '-';
-      locationMiceCont.style.display = locationGroup.isCollapsed ? 'none' : 'block';
-    }
-  };
+    const updateLocationUI = (locationGroup) => {
+    // Instead of toggling collapse, navigate to location
+    currentView = locationGroup.groupName;
+    navigationStack.push(currentView);
+    updateMouseListUI();
+    };
 
 
   const findRegionHeaderElement = (regionName) => { // Find region header
