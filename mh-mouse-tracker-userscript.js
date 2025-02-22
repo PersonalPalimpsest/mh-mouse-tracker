@@ -30,7 +30,7 @@ GM_addStyle(`
   button#mh-tracker-start-button_v2:hover {background-color: #666666;}
   button#mh-tracker-start-button_v2:disabled {background-color: #2a2a2a; cursor: not-allowed;}
   /**/
-  #mh-mouse-list_v2 {display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; margin-top: 5px; min-height: 50px; flex-grow: 1; max-height: 95vh; scrollbar-width: thin; scrollbar-color: #555555 #2a2a2a; height: 100%;} /* Added height: auto; */
+  #mh-mouse-list_v2 {display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; margin-top: 5px; min-height: 10px; flex-grow: 1; max-height: 95vh; scrollbar-width: thin; scrollbar-color: #555555 #2a2a2a; height: 100%;} /* Added height: auto; */
   #mh-mouse-list-header-row_v2 {display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 30px;}
   #mh-mouse-list_v2 div {display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; white-space: nowrap; overflow-y: hidden; text-overflow: ellipsis;}
   #mh-mouse-list_v2 #mh-mouse-list-header-row_v2 {background-color: #444; font-weight: bold; padding: 0px 6px; margin: 0;} /* Padding and margin removed */
@@ -65,7 +65,7 @@ GM_addStyle(`
   .mh-location-title_v2 {flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95em;}
   .mh-location-collapse-icon_v2 {width: 12px; height: 12px; text-align: center; line-height: 12px; margin-left: 8px; font-size: 0.9em; opacity: 0.6; transition: opacity 0.3s ease;}
   .mh-location-header-row_v2:hover .mh-location-collapse-icon_v2 {opacity: 1;}
-  .mh-location-mice-container_v2 {padding: 0px; margin-left: 0px; overflow-y: scroll; min-height: 100px; }
+  .mh-location-mice-container_v2 {padding: 0px; margin-left: 0px; overflow-y: scroll; min-height: 50px; }
   #mh-mouse-list_v2 div{overflow-y: auto;}
   #mh-back-button-container {margin-bottom: 5px;padding: 0 6px; min-height: 20px;}
   #mh-back-button_v2 {background-color: #4a4a4a;color: #e0e0e0;border: none;border-radius: 4px;padding: 4px 10px;font-size: 0.9em;cursor: pointer;transition: background-color 0.3s ease;display: flex;align-items: center;gap: 5px;width: fit-content;}
@@ -543,41 +543,68 @@ GM_addStyle(`
     }
   };
 
-  const createGroupHeaderRow = (group) => { // Reused for region headers
+  const createGroupHeaderRow = (group) => {
     const headerRow = document.createElement('div');
     headerRow.className = 'mh-group-header-row_v2';
     headerRow.onclick = () => enterRegion(group);
 
     const titleSpan = document.createElement('span');
     titleSpan.className = 'mh-group-title_v2';
-    titleSpan.textContent = group.groupName; // Region Name
+    titleSpan.textContent = group.groupName.replace("_", " ");
 
-    const collapseIconSpan = document.createElement('span');
-    collapseIconSpan.className = 'mh-group-collapse-icon_v2';
-    collapseIconSpan.innerHTML = '&rarr;';
+    let nonZeroCount = 0;
+    const uniqueMiceSet = new Set();
+    group.locations.forEach(locationGroup => {
+        locationGroup.mice.forEach(mouse => {
+            uniqueMiceSet.add(mouse.name);
+            const { sessionCatches } = calculateSessionCM(mouse, ts.initialMouseData || []);
+            if (sessionCatches > 0) {
+                nonZeroCount++;
+            }
+        });
+    });
 
-    headerRow.appendChild(titleSpan);
-    headerRow.appendChild(collapseIconSpan);
-    return headerRow;
-  };
-
-  const createLocationHeaderRow = (locationGroup) => { // New for location headers
-    const headerRow = document.createElement('div');
-    headerRow.className = 'mh-location-header-row_v2'; // New class for location headers
-    headerRow.onclick = () => toggleLocationCollapse(locationGroup); // New toggleLocationCollapse
-
-    const titleSpan = document.createElement('span');
-    titleSpan.className = 'mh-location-title_v2'; // New class for location titles
-    titleSpan.textContent = locationGroup.groupName; // Location Name
-
-    const collapseIconSpan = document.createElement('span');
-    collapseIconSpan.className = 'mh-location-collapse-icon_v2'; // New class for location collapse icons
-    collapseIconSpan.innerHTML = '&rarr;';
+    // Instead of a collapse icon, display the counts on the right.
+    const countSpan = document.createElement('span');
+    if(nonZeroCount == uniqueMiceSet.size){
+        headerRow.style.color = 'lightgreen'
+    }
+    countSpan.textContent = `${nonZeroCount}/${uniqueMiceSet.size}`;
 
     headerRow.appendChild(titleSpan);
-    headerRow.appendChild(collapseIconSpan);
+    headerRow.appendChild(countSpan);
     return headerRow;
-  };
+    };
+
+    const createLocationHeaderRow = (locationGroup) => {
+        const headerRow = document.createElement('div');
+        headerRow.className = 'mh-location-header-row_v2';
+        headerRow.onclick = () => toggleLocationCollapse(locationGroup);
+    
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'mh-location-title_v2';
+        titleSpan.textContent = locationGroup.groupName;
+    
+        let nonZeroCount = 0;
+        const uniqueMiceSet = new Set();
+        locationGroup.mice.forEach(mouse => {
+            uniqueMiceSet.add(mouse.name);
+            const { sessionCatches } = calculateSessionCM(mouse, ts.initialMouseData || []);
+            if (sessionCatches > 0) {
+                nonZeroCount++;
+            }
+        });
+    
+        // Display the counts on the right instead of the collapse icon.
+        const countSpan = document.createElement('span');
+        countSpan.textContent = `${nonZeroCount}/${uniqueMiceSet.size}`;
+        if(nonZeroCount == uniqueMiceSet.size){
+            headerRow.style.color = 'lightgreen'
+        }
+        headerRow.appendChild(titleSpan);
+        headerRow.appendChild(countSpan);
+        return headerRow;
+    };
 
 
   const createLocationMiceContainer = (locationGroup) => { // New for location mouse containers
@@ -694,7 +721,7 @@ GM_addStyle(`
 
         locations.forEach((locationName, index) => {
           const envDetails = environmentDetails[index];
-
+        
           allMiceData.push({
             name: mouseName,
             catches: item.num_catches,
@@ -754,35 +781,7 @@ GM_addStyle(`
     return null;
   };
 
-  const findRegionMiceContainerElement = (regionName) => { // Find region container
-    const containers = dom.miceLst.querySelectorAll('.mh-group-mice-container_v2');
-    for (const container of containers) {
-      if (container.previousElementSibling && container.previousElementSibling.querySelector('.mh-group-title_v2').textContent === regionName) {
-        return container;
-      }
-    }
-    return null;
-  };
 
-  const findLocationHeaderElement = (locationName) => { // New: Find location header
-    const headers = dom.miceLst.querySelectorAll('.mh-location-header-row_v2');
-    for (const header of headers) {
-      if (header.querySelector('.mh-location-title_v2').textContent === locationName) {
-        return header;
-      }
-    }
-    return null;
-  };
-
-  const findLocationMiceContainerElement = (locationName) => { // New: Find location container
-    const containers = dom.miceLst.querySelectorAll('.mh-location-mice-container_v2');
-    for (const container of containers) {
-      if (container.previousElementSibling && container.previousElementSibling.querySelector('.mh-location-title_v2').textContent === locationName) {
-        return container;
-      }
-    }
-    return null;
-  };
 
 
   // --- Tracker Start/Reset Logic ---
@@ -875,6 +874,37 @@ GM_addStyle(`
     updateUI();
   }
 
+
+  // --- no longer used methods
+  const findRegionMiceContainerElement = (regionName) => { // Find region container
+    const containers = dom.miceLst.querySelectorAll('.mh-group-mice-container_v2');
+    for (const container of containers) {
+      if (container.previousElementSibling && container.previousElementSibling.querySelector('.mh-group-title_v2').textContent === regionName) {
+        return container;
+      }
+    }
+    return null;
+  };
+
+  const findLocationHeaderElement = (locationName) => { // New: Find location header
+    const headers = dom.miceLst.querySelectorAll('.mh-location-header-row_v2');
+    for (const header of headers) {
+      if (header.querySelector('.mh-location-title_v2').textContent === locationName) {
+        return header;
+      }
+    }
+    return null;
+  };
+
+  const findLocationMiceContainerElement = (locationName) => { // New: Find location container
+    const containers = dom.miceLst.querySelectorAll('.mh-location-mice-container_v2');
+    for (const container of containers) {
+      if (container.previousElementSibling && container.previousElementSibling.querySelector('.mh-location-title_v2').textContent === locationName) {
+        return container;
+      }
+    }
+    return null;
+  };
 
   initializeTracker();
 
