@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         MouseHunt Mouse Tracker
 // @namespace    http://tampermonkey.net/
-// @version      0.8.34
-// @description  Tracks mice caught in MouseHunt (Two-Tiered Grouping: Region > Location + API Region Data + Bug Fix + SemVer Patch + Scroll Fix)
+// @version      0.8.35
+// @description  Tracks mice caught in MouseHunt (reworked grouping)
 // @author       You
 // @match        https://www.mousehuntgame.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=mousehuntgame.com
