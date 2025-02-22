@@ -172,14 +172,6 @@ GM_addStyle(`
     return metrics.width;
   };
 
-  const calculateDefaultTrackerWidth = () => {
-    let longestMouseNameWidth = 0;
-    md.forEach(mouse => {
-      longestMouseNameWidth = Math.max(longestMouseNameWidth, calculateTextWidth(mouse.name));
-    });
-    return longestMouseNameWidth + 40;
-  };
-
   // --- UI Creation Functions ---
   function createTrackerContainer() {
     const cont = document.createElement('div');
@@ -405,7 +397,20 @@ GM_addStyle(`
   };
 
   // --- Data Handling and UI Update ---
-  const calculateTotalHunts = () => md.reduce((total, mouse) => total + mouse.catches + mouse.misses, 0);
+  
+  const calculateTotalHunts = () => {
+    const uniqueNames = {};
+    var hunts = 0;
+    for (const mouse of md){
+        if(!uniqueNames[mouse.name]){
+            uniqueNames[mouse.name] = true;
+            hunts += mouse.catches + mouse.misses;
+        }
+    }
+    return hunts
+
+  }
+    // md.reduce((total, mouse) => total + mouse.catches + mouse.misses, 0);
 
   const groupMouseData = (miceData, currentEnvId) => {
     const regionGroups = {}; // First level: Region
@@ -552,29 +557,27 @@ GM_addStyle(`
     titleSpan.className = 'mh-group-title_v2';
     titleSpan.textContent = group.groupName.replace("_", " ");
 
-    let nonZeroCount = 0;
+    // Use sets to ensure uniqueness for both counts.
     const uniqueMiceSet = new Set();
+    const nonZeroMiceSet = new Set();
     group.locations.forEach(locationGroup => {
         locationGroup.mice.forEach(mouse => {
             uniqueMiceSet.add(mouse.name);
             const { sessionCatches } = calculateSessionCM(mouse, ts.initialMouseData || []);
             if (sessionCatches > 0) {
-                nonZeroCount++;
+                nonZeroMiceSet.add(mouse.name);
             }
         });
     });
 
-    // Instead of a collapse icon, display the counts on the right.
     const countSpan = document.createElement('span');
-    if(nonZeroCount == uniqueMiceSet.size){
-        headerRow.style.color = 'lightgreen'
-    }
-    countSpan.textContent = `${nonZeroCount}/${uniqueMiceSet.size}`;
+    countSpan.textContent = `${nonZeroMiceSet.size}/${uniqueMiceSet.size}`;
 
     headerRow.appendChild(titleSpan);
     headerRow.appendChild(countSpan);
     return headerRow;
     };
+
 
     const createLocationHeaderRow = (locationGroup) => {
         const headerRow = document.createElement('div');
@@ -585,27 +588,24 @@ GM_addStyle(`
         titleSpan.className = 'mh-location-title_v2';
         titleSpan.textContent = locationGroup.groupName;
     
-        let nonZeroCount = 0;
+        // Use sets to ensure uniqueness for both counts.
         const uniqueMiceSet = new Set();
+        const nonZeroMiceSet = new Set();
         locationGroup.mice.forEach(mouse => {
             uniqueMiceSet.add(mouse.name);
             const { sessionCatches } = calculateSessionCM(mouse, ts.initialMouseData || []);
             if (sessionCatches > 0) {
-                nonZeroCount++;
+                nonZeroMiceSet.add(mouse.name);
             }
         });
     
-        // Display the counts on the right instead of the collapse icon.
         const countSpan = document.createElement('span');
-        countSpan.textContent = `${nonZeroCount}/${uniqueMiceSet.size}`;
-        if(nonZeroCount == uniqueMiceSet.size){
-            headerRow.style.color = 'lightgreen'
-        }
+        countSpan.textContent = `${nonZeroMiceSet.size}/${uniqueMiceSet.size}`;
+    
         headerRow.appendChild(titleSpan);
         headerRow.appendChild(countSpan);
         return headerRow;
     };
-
 
   const createLocationMiceContainer = (locationGroup) => { // New for location mouse containers
     const miceCont = document.createElement('div');
@@ -904,6 +904,13 @@ GM_addStyle(`
       }
     }
     return null;
+  };
+  const calculateDefaultTrackerWidth = () => {
+    let longestMouseNameWidth = 0;
+    md.forEach(mouse => {
+      longestMouseNameWidth = Math.max(longestMouseNameWidth, calculateTextWidth(mouse.name));
+    });
+    return longestMouseNameWidth + 40;
   };
 
   initializeTracker();
