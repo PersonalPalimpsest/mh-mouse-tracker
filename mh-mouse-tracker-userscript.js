@@ -31,7 +31,7 @@ GM_addStyle(`
   button#mh-tracker-start-button_v2:disabled {background-color: #2a2a2a; cursor: not-allowed;}
   /**/
   #mh-mouse-list_v2 {display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; margin-top: 5px; min-height: 50px; flex-grow: 1; max-height: 95vh; scrollbar-width: thin; scrollbar-color: #555555 #2a2a2a; height: 100%;} /* Added height: auto; */
-  #mh-mouse-list-header-row_v2 {display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+  #mh-mouse-list-header-row_v2 {display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 30px;}
   #mh-mouse-list_v2 div {display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; white-space: nowrap; overflow-y: hidden; text-overflow: ellipsis;}
   #mh-mouse-list_v2 #mh-mouse-list-header-row_v2 {background-color: #444; font-weight: bold; padding: 0px 6px; margin: 0;} /* Padding and margin removed */
   #mh-mouse-list_v2 div {background-color: #3d3d3d; margin-bottom: 0px; transition: background-color 0.3s ease;} /* Reduced padding */
@@ -40,7 +40,7 @@ GM_addStyle(`
   #mh-mouse-list_v2 div[style*="color: lightgreen"] {color: lightgreen;}
   /**/
   .mh-mouse-name-col_v2 {text-align: left; padding: 0px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 25px;}
-  .mh-header-name-col_v2 {text-align: left; padding: 0px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 25px;}
+  .mh-header-name-col_v2 {text-align: left; padding: 4px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
   .mh-cm-col_v2, .mh-header-cm-col_v2 {text-align: center; padding: 4px 0; padding-right: 2px; box-sizing: border-box; min-width: 0; white-space: nowrap;}
   /**/
   #mh-mouse-tracker-container_v2.resizing {cursor: nwse-resize;}
@@ -67,6 +67,43 @@ GM_addStyle(`
   .mh-location-header-row_v2:hover .mh-location-collapse-icon_v2 {opacity: 1;}
   .mh-location-mice-container_v2 {padding: 0px; margin-left: 0px; overflow-y: scroll; min-height: 100px; }
   #mh-mouse-list_v2 div{overflow-y: auto;}
+  #mh-back-button-container {margin-bottom: 5px;padding: 0 6px; min-height: 20px;}
+  #mh-back-button_v2 {background-color: #4a4a4a;color: #e0e0e0;border: none;border-radius: 4px;padding: 4px 10px;font-size: 0.9em;cursor: pointer;transition: background-color 0.3s ease;display: flex;align-items: center;gap: 5px;width: fit-content;}
+  #mh-back-button_v2:hover {background-color: #5a5a5a;}
+  #mh-back-button-container {
+  margin-bottom: 5px;
+  padding: 0 6px;}
+
+#mh-navigation-row_v2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#mh-back-button_v2 {
+  background-color: #4a4a4a;
+  color: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+}
+
+#mh-back-button_v2:hover {
+  background-color: #5a5a5a;
+}
+
+#mh-current-location_v2 {
+  color: #e0e0e0;
+  font-size: 0.95em;
+  font-weight: bold;
+}
 `);
 
 // == JavaScript functions ==
@@ -207,16 +244,26 @@ GM_addStyle(`
   const createMouseList = () => {
     const miceLst = document.createElement('div');
     miceLst.id = 'mh-mouse-list_v2';
-    
-    // Add back button container
     const backButtonContainer = document.createElement('div');
     backButtonContainer.id = 'mh-back-button-container';
-    backButtonContainer.style.display = 'none';
-    const backButton = document.createElement('button');
-    backButton.textContent = '← Back';
-    backButton.onclick = handleBackNavigation;
-    backButtonContainer.appendChild(backButton);
+    const navigationRow = document.createElement('div');
+    navigationRow.id = 'mh-navigation-row_v2';
     
+    const backButton = document.createElement('button');
+    backButton.id = 'mh-back-button_v2';
+    backButton.innerHTML = '&larr; Back';
+    backButton.onclick = handleBackNavigation;
+    
+    const currentLocation = document.createElement('span');
+    currentLocation.id = 'mh-current-location_v2';
+    // Show the current view name if not at root
+    currentLocation.textContent = currentView !== 'root' ? currentView : '';
+    
+    navigationRow.appendChild(backButton);
+    navigationRow.appendChild(currentLocation);
+    backButtonContainer.appendChild(navigationRow);
+    backButtonContainer.style.display = navigationStack.length > 0 ? 'block' : 'none';
+
     const headerRow = document.createElement('div');
     headerRow.id = 'mh-mouse-list-header-row_v2';
     headerRow.innerHTML = `
@@ -426,15 +473,27 @@ GM_addStyle(`
     const miceLst = dom.miceLst;
     miceLst.innerHTML = '';
   
-    // Recreate back button and header
+    // Create back button container and navigation
     const backButtonContainer = document.createElement('div');
     backButtonContainer.id = 'mh-back-button-container';
+    const navigationRow = document.createElement('div');
+    navigationRow.id = 'mh-navigation-row_v2';
+  
     const backButton = document.createElement('button');
-    backButton.textContent = '← Back';
+    backButton.id = 'mh-back-button_v2';
+    backButton.innerHTML = '&larr; Back';
     backButton.onclick = handleBackNavigation;
-    backButtonContainer.appendChild(backButton);
+  
+    const currentLocation = document.createElement('span');
+    currentLocation.id = 'mh-current-location_v2';
+    currentLocation.textContent = currentView !== 'root' ? currentView : '';
+  
+    navigationRow.appendChild(backButton);
+    navigationRow.appendChild(currentLocation);
+    backButtonContainer.appendChild(navigationRow);
     backButtonContainer.style.display = navigationStack.length > 0 ? 'block' : 'none';
     
+    // Create header row
     const headerRow = document.createElement('div');
     headerRow.id = 'mh-mouse-list-header-row_v2';
     headerRow.innerHTML = `
@@ -506,7 +565,7 @@ GM_addStyle(`
   const createGroupHeaderRow = (group) => { // Reused for region headers
     const headerRow = document.createElement('div');
     headerRow.className = 'mh-group-header-row_v2';
-    headerRow.onclick = () => toggleRegionCollapse(group); // Call toggleRegionCollapse for region headers
+    headerRow.onclick = () => enterRegion(group);
 
     const titleSpan = document.createElement('span');
     titleSpan.className = 'mh-group-title_v2';
@@ -514,7 +573,7 @@ GM_addStyle(`
 
     const collapseIconSpan = document.createElement('span');
     collapseIconSpan.className = 'mh-group-collapse-icon_v2';
-    collapseIconSpan.textContent = group.isCollapsed ? '+' : '-';
+    collapseIconSpan.textContent = '>';
 
     headerRow.appendChild(titleSpan);
     headerRow.appendChild(collapseIconSpan);
@@ -676,9 +735,7 @@ GM_addStyle(`
   };
 
   // --- Group Collapsing Logic ---
-  const toggleRegionCollapse = (regionGroup) => { // For region group collapse
-	  regionGroup.isCollapsed = !regionGroup.isCollapsed;
-	  GM_setValue('mhTracker_regionCollapse_' + regionGroup.groupName, regionGroup.isCollapsed); // Save region collapse state
+  const enterRegion = (regionGroup) => { // For region group collapse
 	  updateRegionUI(regionGroup);
   };
 
