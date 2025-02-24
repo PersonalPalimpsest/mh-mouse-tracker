@@ -31,15 +31,15 @@ GM_addStyle(`
   button#mh-tracker-start-button_v2:disabled {background-color: #2a2a2a; cursor: not-allowed;}
   /**/
   #mh-mouse-list_v2 {display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; margin-top: 5px; min-height: 10px; flex-grow: 1; max-height: 95vh; scrollbar-width: thin; scrollbar-color: #555555 #2a2a2a; height: 100%;} /* Added height: auto; */
-  #mh-mouse-list-header-row_v2 {display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 30px;}
+  #mh-mouse-list-header-row_v2 {display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; white-space: nowrap; overflow: hidden; min-height: 25px; text-overflow: ellipsis; min-height: 30px;}
   #mh-mouse-list_v2 div {display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; white-space: nowrap; overflow-y: hidden; text-overflow: ellipsis;}
-  #mh-mouse-list_v2 #mh-mouse-list-header-row_v2 {background-color: #444; font-weight: bold; padding: 0px 6px; margin: 0;} /* Padding and margin removed */
+  #mh-mouse-list_v2 #mh-mouse-list-header-row_v2 {background-color: #000; font-weight: bold; padding: 0px 6px; margin: 0;} /* Padding and margin removed */
   #mh-mouse-list_v2 div {background-color: #3d3d3d; margin-bottom: 0px; transition: background-color 0.3s ease;} /* Reduced padding */
   #mh-mouse-list_v2 div:nth-child(odd) {background-color: #333333;}
   #mh-mouse-list_v2 div:hover {background-color: #555555;}
   #mh-mouse-list_v2 div[style*="color: lightgreen"] {color: lightgreen;}
   /**/
-  .mh-mouse-name-col_v2 {text-align: left; padding: 0px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 25px;}
+  .mh-mouse-name-col_v2 {text-align: left; padding: 4px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mh-header-name-col_v2 {text-align: left; padding: 4px 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
   .mh-cm-col_v2, .mh-header-cm-col_v2 {text-align: center; padding: 4px 0; padding-right: 2px; box-sizing: border-box; min-width: 0; white-space: nowrap;}
   /**/
@@ -60,12 +60,12 @@ GM_addStyle(`
   .mh-group-collapse-icon_v2 {width: 14px; height: 14px; text-align: center; line-height: 14px; margin-left: 10px; font-size: 1em; opacity: 0.7; transition: opacity 0.3s ease;}
   .mh-group-header-row_v2:hover .mh-group-collapse-icon_v2 {opacity: 1;}
   .mh-group-mice-container_v2 {padding: 0px; margin-left: 0px; overflow-y:scroll;/*height: auto;*/ } /* Removed fixed height from group containers, removed margin */
-  .mh-location-header-row_v2 {background-color: #4a4a4a; color: #e8e8e8; font-weight: bold; padding: 3px 6px; margin-top: 0px; margin-bottom: 0px; border-radius: 3px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;} /* Reduced padding and margin */
+  .mh-location-header-row_v2 {background-color: #4a4a4a; color: #e8e8e8; font-weight: bold; padding: 5px 6px; margin-top: 0px; margin-bottom: 0px; min_height: 25px; border-radius: 3px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;}
   .mh-location-header-row_v2:hover {background-color: #5a5a5a;}
   .mh-location-title_v2 {flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95em;}
   .mh-location-collapse-icon_v2 {width: 12px; height: 12px; text-align: center; line-height: 12px; margin-left: 8px; font-size: 0.9em; opacity: 0.6; transition: opacity 0.3s ease;}
   .mh-location-header-row_v2:hover .mh-location-collapse-icon_v2 {opacity: 1;}
-  .mh-location-mice-container_v2 {padding: 0px; margin-left: 0px; overflow-y: scroll; min-height: 50px; }
+  .mh-location-mice-container_v2 {padding: 0px; margin-left: 0px; overflow-y: scroll; min-height: 25px; }
   #mh-mouse-list_v2 div{overflow-y: auto;}
   #mh-back-button-container {margin-bottom: 5px;padding: 0 6px; min-height: 20px;}
   #mh-back-button_v2 {background-color: #4a4a4a;color: #e0e0e0;border: none;border-radius: 4px;padding: 4px 10px;font-size: 0.9em;cursor: pointer;transition: background-color 0.3s ease;display: flex;align-items: center;gap: 5px;width: fit-content;}
