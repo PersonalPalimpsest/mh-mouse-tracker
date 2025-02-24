@@ -275,6 +275,7 @@ GM_addStyle(`
       navigationStack.pop(); // Remove current view
       currentView = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : 'root';
       updateMouseListUI(); // Refresh the UI
+      saveNavigationState(); // Save the updated navigation state
     }
   };
   function createReopenButton(trackerCont) {
@@ -547,7 +548,23 @@ GM_addStyle(`
       }
     }
   };
+  const regionTranslationDict = {
+    "riftopia": "Rift Plane",
+    "gnawnia": "Gnawnia",
+    "burroughs": "Burroughs",
+    "furoma": "Furoma",
+    "bristle_woods": "Bristle Woods",
+    "tribal_isles": "Tribal Isles",
+    "valour": "Valour",
+    "whisker_woods": "Whisker Woods",
+    "desert": "Sandtail Desert",
+    "rodentia": "Rodentia",
+    "varmint_valley": "Varmint Valley",
+    "queso_canyon": "Queso Canyon",
+    "zokor_zone": "Hollow Heights",
+    "folklore_forest": "Folklore Forest"
 
+  }
   const createGroupHeaderRow = (group) => {
     const headerRow = document.createElement('div');
     headerRow.className = 'mh-group-header-row_v2';
@@ -555,7 +572,7 @@ GM_addStyle(`
 
     const titleSpan = document.createElement('span');
     titleSpan.className = 'mh-group-title_v2';
-    titleSpan.textContent = group.groupName.replace("_", " ");
+    titleSpan.textContent = regionTranslationDict[group.groupName] ?? "Unknown Region";
 
     // Use sets to ensure uniqueness for both counts.
     const uniqueMiceSet = new Set();
@@ -747,12 +764,22 @@ GM_addStyle(`
   };
 
   // --- Group Collapsing Logic ---
-  const enterRegion = (regionGroup) => { // For region group collapse
-	  updateRegionUI(regionGroup);
+  const saveNavigationState = () => {
+    const navState = {
+      currentView: currentView,
+      navigationStack: navigationStack
+    };
+    localStorage.setItem('umm_tracker_current_tab', JSON.stringify(navState));
   };
 
-  const toggleLocationCollapse = (locationGroup) => { // New for location group collapse
-	  updateLocationUI(locationGroup);
+  const enterRegion = (regionGroup) => {
+    updateRegionUI(regionGroup);
+    saveNavigationState();
+  };
+
+  const toggleLocationCollapse = (locationGroup) => {
+    updateLocationUI(locationGroup);
+    saveNavigationState();
   };
 
   const updateRegionUI = (regionGroup) => {
@@ -770,16 +797,6 @@ GM_addStyle(`
     updateMouseListUI();
     };
 
-
-  const findRegionHeaderElement = (regionName) => { // Find region header
-    const headers = dom.miceLst.querySelectorAll('.mh-group-header-row_v2');
-    for (const header of headers) {
-      if (header.querySelector('.mh-group-title_v2').textContent === regionName) {
-        return header;
-      }
-    }
-    return null;
-  };
 
 
 
@@ -839,7 +856,12 @@ GM_addStyle(`
   function resetTracker() {
     ts = {};
     localStorage.removeItem('mhMouseTrackerState_v2');
-
+    
+    // Reset navigation state as well
+    currentView = 'root';
+    navigationStack = [];
+    localStorage.removeItem('umm_tracker_current_tab');
+  
     dom.startBtn.textContent = 'Start Tracker';
     dom.startBtn.style.color = '';
     dom.miceLst.innerHTML = `
@@ -852,9 +874,8 @@ GM_addStyle(`
     dom.huntsCountDisplay.textContent = 'Hunts: 0';
     fetchMouseDataAndUpdateUI();
   }
-
   // --- Initialization ---
-  async function initializeTracker() { // Make initializeTracker async
+  async function initializeTracker() {
     createUI();
     if (!dom.startBtn) {
       console.error("Error: dom.startBtn not initialized! UI create fail.");
@@ -862,7 +883,7 @@ GM_addStyle(`
     }
     await fetchEnvironmentsData(); // Fetch environments data on initialization
     fetchMouseDataAndUpdateUI();
-
+  
     const storedTrackerState = localStorage.getItem('mhMouseTrackerState_v2');
     if (storedTrackerState) {
       ts = JSON.parse(storedTrackerState);
@@ -871,9 +892,23 @@ GM_addStyle(`
         dom.startBtn.style.color = '#888';
       }
     }
+    
+    // Load saved navigation state
+    const savedNavState = localStorage.getItem('umm_tracker_current_tab');
+    if (savedNavState) {
+      try {
+        const navData = JSON.parse(savedNavState);
+        currentView = navData.currentView || 'root';
+        navigationStack = navData.navigationStack || [];
+      } catch (e) {
+        console.error("Error parsing saved navigation state:", e);
+        currentView = 'root';
+        navigationStack = [];
+      }
+    }
+    
     updateUI();
   }
-
 
   // --- no longer used methods
   const findRegionMiceContainerElement = (regionName) => { // Find region container
@@ -911,6 +946,15 @@ GM_addStyle(`
       longestMouseNameWidth = Math.max(longestMouseNameWidth, calculateTextWidth(mouse.name));
     });
     return longestMouseNameWidth + 40;
+  };
+  const findRegionHeaderElement = (regionName) => { // Find region header
+    const headers = dom.miceLst.querySelectorAll('.mh-group-header-row_v2');
+    for (const header of headers) {
+      if (header.querySelector('.mh-group-title_v2').textContent === regionName) {
+        return header;
+      }
+    }
+    return null;
   };
 
   initializeTracker();
