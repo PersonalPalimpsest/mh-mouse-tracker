@@ -278,6 +278,7 @@ GM_addStyle(`
       saveNavigationState(); // Save the updated navigation state
     }
   };
+
   function createReopenButton(trackerCont) {
     const reopenBtn = document.createElement('button');
     reopenBtn.id = 'mh-tracker-reopen-button_v2';
@@ -490,20 +491,39 @@ GM_addStyle(`
   
     const currentLocation = document.createElement('span');
     currentLocation.id = 'mh-current-location_v2';
-    currentLocation.textContent = currentView !== 'root' ? currentView : '';
-  
+    const headerRow = document.createElement('div');
+    headerRow.id = 'mh-mouse-list-header-row_v2';
+
+    switch(navigationStack.length){
+      case 2:
+        currentLocation.textContent = currentView;
+        // Create header row
+        headerRow.innerHTML = `
+          <span class="mh-header-name-col_v2">Mouse</span>
+          <span class="mh-header-cm-col_v2">C/M</span>
+        `;        break;
+      case 1:
+        currentLocation.textContent = correctGroupName(currentView);
+        // Create header row
+        headerRow.innerHTML = `
+        <span class="mh-header-name-col_v2">Mouse</span>
+        <span class="mh-header-cm-col_v2">Completed</span>
+      `;
+        break;
+      default:
+        currentLocation.textContent = '';
+        headerRow.innerHTML = `
+        <span class="mh-header-name-col_v2">Mouse</span>
+        <span class="mh-header-cm-col_v2">Completed</span>
+      `;
+    }
+
+
+
     navigationRow.appendChild(backButton);
     navigationRow.appendChild(currentLocation);
     backButtonContainer.appendChild(navigationRow);
     backButtonContainer.style.display = navigationStack.length > 0 ? 'block' : 'none';
-    
-    // Create header row
-    const headerRow = document.createElement('div');
-    headerRow.id = 'mh-mouse-list-header-row_v2';
-    headerRow.innerHTML = `
-      <span class="mh-header-name-col_v2">Mouse</span>
-      <span class="mh-header-cm-col_v2">C/M</span>
-    `;
     
     miceLst.appendChild(backButtonContainer);
     miceLst.appendChild(headerRow);
@@ -548,23 +568,7 @@ GM_addStyle(`
       }
     }
   };
-  const regionTranslationDict = {
-    "riftopia": "Rift Plane",
-    "gnawnia": "Gnawnia",
-    "burroughs": "Burroughs",
-    "furoma": "Furoma",
-    "bristle_woods": "Bristle Woods",
-    "tribal_isles": "Tribal Isles",
-    "valour": "Valour",
-    "whisker_woods": "Whisker Woods",
-    "desert": "Sandtail Desert",
-    "rodentia": "Rodentia",
-    "varmint_valley": "Varmint Valley",
-    "queso_canyon": "Queso Canyon",
-    "zokor_zone": "Hollow Heights",
-    "folklore_forest": "Folklore Forest"
 
-  }
   const createGroupHeaderRow = (group) => {
     const headerRow = document.createElement('div');
     headerRow.className = 'mh-group-header-row_v2';
@@ -572,7 +576,7 @@ GM_addStyle(`
 
     const titleSpan = document.createElement('span');
     titleSpan.className = 'mh-group-title_v2';
-    titleSpan.textContent = regionTranslationDict[group.groupName] ?? "Unknown Region";
+    titleSpan.textContent = correctGroupName(group.groupName);
 
     // Use sets to ensure uniqueness for both counts.
     const uniqueMiceSet = new Set();
@@ -800,7 +804,28 @@ GM_addStyle(`
 
 
 
+  function correctGroupName(groupName){
+    const regionTranslationDict = {
+      "riftopia": "Rift Plane",
+      "gnawnia": "Gnawnia",
+      "burroughs": "Burroughs",
+      "furoma": "Furoma",
+      "bristle_woods": "Bristle Woods",
+      "tribal_isles": "Tribal Isles",
+      "valour": "Valour",
+      "whisker_woods": "Whisker Woods",
+      "desert": "Sandtail Desert",
+      "rodentia": "Rodentia",
+      "varmint_valley": "Varmint Valley",
+      "queso_canyon": "Queso Canyon",
+      "zokor_zone": "Hollow Heights",
+      "folklore_forest": "Folklore Forest"
+  
+    }
+    let correctedGroupname = regionTranslationDict[groupName] ?? "Unknown Region"
 
+    return correctedGroupname
+  }
 
   // --- Tracker Start/Reset Logic ---
   function startTracker() {
