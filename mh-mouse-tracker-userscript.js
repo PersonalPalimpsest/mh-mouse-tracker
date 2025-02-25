@@ -18,6 +18,8 @@ GM_addStyle(`
   #mh-mouse-tracker-container_v2 {position: absolute; top: 20px; left: 20px; z-index: 1000; display: flex; flex-direction: column; overflow: hidden; background-color: #2a2a2a; color: #e0e0e0; border: 1px solid #444444; border-radius: 5px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.6); cursor: default; padding: 10px 10px 10px 10px; max-height: 95vh; min-height: 75px; font-size: math;}
   #mh-mouse-tracker-container_v2 h3 {cursor: grab; margin: 0 0 10px 0; font-size: 1.2em; font-weight: bold; color: #f1f1f1; user-select: none; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;}
   /**/
+  #mh-tracker-export-button_v2 {background: none; color: #e0e0e0; border: none; font-size: 1em; cursor: pointer; opacity: 0.6; transition: opacity 0.3s ease; margin-left: 10px; position: relative; top: -3px;}
+  #mh-tracker-export-button_v2:hover {opacity: 1;}
   #mh-tracker-close-button_v2 {background: none; color: #e0e0e0; border: none; font-size: 1em; cursor: pointer; opacity: 0.6; transition: opacity 0.3s ease; margin-left: 10px; position: relative; top: -3px;}
   #mh-tracker-close-button_v2:hover {opacity: 1;}
   /**/
@@ -193,6 +195,14 @@ GM_addStyle(`
     }
     titleElement.textContent = `Mouse Tracker v${GM_info.script.version}`;
     titleElement.addEventListener('mousedown', startDrag(trackerCont));
+
+    //export button
+    const exportButton = document.createElement('button');
+    exportButton.textContent = "Export Data";
+    exportButton.id = 'mh-trakcer-export-button_v2'
+    exportButton.addEventListener('click', copyMouseDataToClipboard);
+
+    titleElement.appendChild(exportButton)
     return titleElement;
   }
 
@@ -270,14 +280,6 @@ GM_addStyle(`
     return miceLst;
   };
 
-  const handleBackNavigation = () => {
-    if (navigationStack.length > 0) {
-      navigationStack.pop(); // Remove current view
-      currentView = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : 'root';
-      updateMouseListUI(); // Refresh the UI
-      saveNavigationState(); // Save the updated navigation state
-    }
-  };
 
   function createReopenButton(trackerCont) {
     const reopenBtn = document.createElement('button');
@@ -689,6 +691,53 @@ GM_addStyle(`
     });
   };
 
+  const handleBackNavigation = () => {
+    if (navigationStack.length > 0) {
+      navigationStack.pop(); 
+      currentView = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : 'root';
+      updateMouseListUI(); 
+      saveNavigationState(); 
+    }
+  };
+
+  async function copyMouseDataToClipboard() {
+    console.log(ts.initialMouseData)
+    let fullOutput = "";
+    let unique_mice = await getAllMiceData();
+    unique_mice.forEach(mouse => {
+        fullOutput += createExportRow(mouse, ts.initialMouseData) + "\n";
+    });
+
+    navigator.clipboard.writeText(fullOutput)
+        .then(() => console.log("Copied to clipboard:\n"))
+        .catch(err => console.error("Failed to copy text: ", err));
+  }
+
+  function createExportRow(mouse, initialMouseData){
+    const { sessionCatches, sessionMisses } = calculateSessionCM(mouse, initialMouseData);
+    return `${mouse.name}\t${sessionCatches}\t${sessionMisses}`;
+  }
+
+  async function getAllMiceData(){
+    await fetchEnvironmentsData(); // Ensure environments data is fetched
+
+    let allInitialMouseData = [];
+    const initialAllMiceStats = await getHuntingStatsPromise();
+
+    if (initialAllMiceStats) {
+      for (const item of initialAllMiceStats) {
+        const mouseName = correctMouseName(item.name);
+        const initialMouseEntry = {
+          name: mouseName,
+          catches: item.num_catches,
+          misses: item.num_misses
+        };
+        allInitialMouseData.push(initialMouseEntry);
+      }
+    }
+
+    return JSON.parse(JSON.stringify(allInitialMouseData));
+  }
   const updateUI = () => {
     if (!dom.miceLst) {
       console.error("UI not initialized. Call createUI() first.");
